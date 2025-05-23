@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, Target, Plus, CreditCard, Wallet, PiggyBank } from "lucide-react";
+import { 
+  DollarSign, TrendingUp, TrendingDown, Target, Plus, CreditCard, 
+  Wallet, PiggyBank, BarChart4, Calculator, Briefcase 
+} from "lucide-react";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { IncomeForm } from "@/components/IncomeForm";
 import { BudgetForm } from "@/components/BudgetForm";
@@ -13,6 +16,9 @@ import { ExpenseChart } from "@/components/ExpenseChart";
 import { BudgetProgress } from "@/components/BudgetProgress";
 import { RecentTransactions } from "@/components/RecentTransactions";
 import { FinancialOverview } from "@/components/FinancialOverview";
+import { InvestmentPortfolio } from "@/components/InvestmentPortfolio";
+import { InvestmentForm } from "@/components/InvestmentForm";
+import { TaxOptimization } from "@/components/TaxOptimization";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { toast } from "@/hooks/use-toast";
 
@@ -23,13 +29,17 @@ const Index = () => {
     income, 
     budgets, 
     goals, 
+    investments,
     addExpense, 
     addIncome, 
     addBudget, 
     addGoal,
+    addInvestment,
     getTotalIncome,
     getTotalExpenses,
-    getNetBalance
+    getNetBalance,
+    getTotalInvestmentValue,
+    getTotalInvestmentReturn
   } = useFinancialData();
 
   const handleAddExpense = (expense: any) => {
@@ -64,6 +74,14 @@ const Index = () => {
     });
   };
 
+  const handleAddInvestment = (investment: any) => {
+    addInvestment(investment);
+    toast({
+      title: "Investment Added",
+      description: "Your investment has been successfully added to your portfolio.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="container mx-auto px-4 py-8">
@@ -73,9 +91,9 @@ const Index = () => {
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-7 mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
+              <BarChart4 className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
             <TabsTrigger value="expenses" className="flex items-center gap-2">
@@ -94,6 +112,14 @@ const Index = () => {
               <Target className="h-4 w-4" />
               Goals
             </TabsTrigger>
+            <TabsTrigger value="investments" className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Investments
+            </TabsTrigger>
+            <TabsTrigger value="tax" className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Tax
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -101,6 +127,8 @@ const Index = () => {
               totalIncome={getTotalIncome()}
               totalExpenses={getTotalExpenses()}
               netBalance={getNetBalance()}
+              totalInvestments={getTotalInvestmentValue()}
+              totalReturns={getTotalInvestmentReturn()}
             />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -109,6 +137,12 @@ const Index = () => {
             </div>
             
             <RecentTransactions expenses={expenses} income={income} />
+
+            {investments.length > 0 && (
+              <div className="mt-6">
+                <InvestmentPortfolio investments={investments} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-6">
@@ -127,7 +161,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white shadow-sm border border-gray-100">
               <CardHeader>
                 <CardTitle>Recent Expenses</CardTitle>
               </CardHeader>
@@ -170,7 +204,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white shadow-sm border border-gray-100">
               <CardHeader>
                 <CardTitle>Income Sources</CardTitle>
               </CardHeader>
@@ -215,14 +249,14 @@ const Index = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {budgets.length === 0 ? (
-                <Card className="col-span-full">
+                <Card className="col-span-full bg-white shadow-sm border border-gray-100">
                   <CardContent className="text-center py-8">
                     <p className="text-gray-500">No budgets created yet. Create your first budget above!</p>
                   </CardContent>
                 </Card>
               ) : (
                 budgets.map((budget, index) => (
-                  <Card key={index} className="hover:shadow-md transition-shadow">
+                  <Card key={index} className="hover:shadow-md transition-shadow bg-white shadow-sm border border-gray-100">
                     <CardHeader>
                       <CardTitle className="text-lg">{budget.category}</CardTitle>
                       <CardDescription>${budget.amount} limit</CardDescription>
@@ -269,7 +303,7 @@ const Index = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {goals.length === 0 ? (
-                <Card className="col-span-full">
+                <Card className="col-span-full bg-white shadow-sm border border-gray-100">
                   <CardContent className="text-center py-8">
                     <PiggyBank className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">No goals set yet. Create your first financial goal above!</p>
@@ -277,7 +311,7 @@ const Index = () => {
                 </Card>
               ) : (
                 goals.map((goal, index) => (
-                  <Card key={index} className="hover:shadow-md transition-shadow">
+                  <Card key={index} className="hover:shadow-md transition-shadow bg-white shadow-sm border border-gray-100">
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <span>{goal.name}</span>
@@ -316,6 +350,77 @@ const Index = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="investments" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Add Investment
+                </CardTitle>
+                <CardDescription>
+                  Track your investment portfolio performance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InvestmentForm onSubmit={handleAddInvestment} />
+              </CardContent>
+            </Card>
+
+            <InvestmentPortfolio investments={investments} />
+          </TabsContent>
+
+          <TabsContent value="tax" className="space-y-6">
+            <TaxOptimization />
+            
+            <Card className="bg-white shadow-sm border border-gray-100">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Tax Deductible Expenses
+                </CardTitle>
+                <CardDescription>
+                  Expenses that may qualify for tax deductions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {expenses.filter(e => 
+                    ["Business", "Education", "Healthcare", "Charity", "Home Office"].includes(e.category)
+                  ).length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No potential tax deductible expenses found.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {expenses
+                        .filter(e => ["Business", "Education", "Healthcare", "Charity", "Home Office"].includes(e.category))
+                        .map((expense, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                            <div>
+                              <p className="font-medium">{expense.description}</p>
+                              <p className="text-sm text-gray-500">{expense.category} • {expense.date}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-red-600">${expense.amount}</p>
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">Tax Deductible</Badge>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="pt-4 border-t">
+                          <div className="flex justify-between font-medium">
+                            <span>Potential Tax Deductions Total:</span>
+                            <span className="text-blue-700">
+                              ${expenses
+                                .filter(e => ["Business", "Education", "Healthcare", "Charity", "Home Office"].includes(e.category))
+                                .reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

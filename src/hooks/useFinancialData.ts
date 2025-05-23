@@ -38,11 +38,23 @@ export interface Goal {
   deadline: string;
 }
 
+export interface Investment {
+  id: string;
+  name: string;
+  type: string; // stocks, bonds, crypto, real estate, etc.
+  value: number;
+  initialInvestment: number;
+  purchaseDate: string;
+  returnRate: number;
+  risk: 'low' | 'medium' | 'high';
+}
+
 export const useFinancialData = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
     const newExpense = {
@@ -85,6 +97,14 @@ export const useFinancialData = () => {
     setGoals(prev => [newGoal, ...prev]);
   };
 
+  const addInvestment = (investment: Omit<Investment, 'id'>) => {
+    const newInvestment = {
+      ...investment,
+      id: Date.now().toString(),
+    };
+    setInvestments(prev => [newInvestment, ...prev]);
+  };
+
   const getTotalIncome = () => {
     return income.reduce((total, item) => total + item.amount, 0);
   };
@@ -95,6 +115,15 @@ export const useFinancialData = () => {
 
   const getNetBalance = () => {
     return getTotalIncome() - getTotalExpenses();
+  };
+
+  const getTotalInvestmentValue = () => {
+    return investments.reduce((total, investment) => total + investment.value, 0);
+  };
+
+  const getTotalInvestmentReturn = () => {
+    return investments.reduce((total, investment) => 
+      total + (investment.value - investment.initialInvestment), 0);
   };
 
   const getCategoryExpenses = () => {
@@ -110,13 +139,17 @@ export const useFinancialData = () => {
     income,
     budgets,
     goals,
+    investments,
     addExpense,
     addIncome,
     addBudget,
     addGoal,
+    addInvestment,
     getTotalIncome,
     getTotalExpenses,
     getNetBalance,
+    getTotalInvestmentValue,
+    getTotalInvestmentReturn,
     getCategoryExpenses,
   };
 };
