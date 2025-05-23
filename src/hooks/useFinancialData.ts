@@ -49,12 +49,28 @@ export interface Investment {
   risk: 'low' | 'medium' | 'high';
 }
 
+export interface Loan {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  interestRate: number;
+  startDate: string;
+  endDate: string;
+  monthlyPayment: number;
+  lender: string;
+  itemPurchased: string;
+  remainingAmount: number;
+  status: 'active' | 'paid' | 'defaulted';
+}
+
 export const useFinancialData = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [income, setIncome] = useState<Income[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
     const newExpense = {
@@ -105,6 +121,30 @@ export const useFinancialData = () => {
     setInvestments(prev => [newInvestment, ...prev]);
   };
 
+  const addLoan = (loan: Omit<Loan, 'id' | 'remainingAmount' | 'status'>) => {
+    const newLoan = {
+      ...loan,
+      id: Date.now().toString(),
+      remainingAmount: loan.amount,
+      status: 'active' as const,
+    };
+    setLoans(prev => [newLoan, ...prev]);
+  };
+
+  const updateLoanPayment = (loanId: string, paymentAmount: number) => {
+    setLoans(prev => prev.map(loan => {
+      if (loan.id === loanId) {
+        const newRemainingAmount = Math.max(0, loan.remainingAmount - paymentAmount);
+        return {
+          ...loan,
+          remainingAmount: newRemainingAmount,
+          status: newRemainingAmount === 0 ? 'paid' : 'active',
+        };
+      }
+      return loan;
+    }));
+  };
+
   const getTotalIncome = () => {
     return income.reduce((total, item) => total + item.amount, 0);
   };
@@ -126,6 +166,10 @@ export const useFinancialData = () => {
       total + (investment.value - investment.initialInvestment), 0);
   };
 
+  const getTotalLoanAmount = () => {
+    return loans.reduce((total, loan) => total + loan.remainingAmount, 0);
+  };
+
   const getCategoryExpenses = () => {
     const categoryTotals: Record<string, number> = {};
     expenses.forEach(expense => {
@@ -140,16 +184,20 @@ export const useFinancialData = () => {
     budgets,
     goals,
     investments,
+    loans,
     addExpense,
     addIncome,
     addBudget,
     addGoal,
     addInvestment,
+    addLoan,
+    updateLoanPayment,
     getTotalIncome,
     getTotalExpenses,
     getNetBalance,
     getTotalInvestmentValue,
     getTotalInvestmentReturn,
+    getTotalLoanAmount,
     getCategoryExpenses,
   };
 };

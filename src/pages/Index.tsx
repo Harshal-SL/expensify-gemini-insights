@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { 
   DollarSign, TrendingUp, TrendingDown, Target, Plus, CreditCard, 
-  Wallet, PiggyBank, BarChart4, Calculator, Briefcase 
+  Wallet, PiggyBank, BarChart4, Calculator, Briefcase, Landmark
 } from "lucide-react";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { IncomeForm } from "@/components/IncomeForm";
@@ -19,6 +18,8 @@ import { FinancialOverview } from "@/components/FinancialOverview";
 import { InvestmentPortfolio } from "@/components/InvestmentPortfolio";
 import { InvestmentForm } from "@/components/InvestmentForm";
 import { TaxOptimization } from "@/components/TaxOptimization";
+import { LoanForm } from "@/components/LoanForm";
+import { LoanTracker } from "@/components/LoanTracker";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { toast } from "@/hooks/use-toast";
 
@@ -30,16 +31,20 @@ const Index = () => {
     budgets, 
     goals, 
     investments,
+    loans,
     addExpense, 
     addIncome, 
     addBudget, 
     addGoal,
     addInvestment,
+    addLoan,
+    updateLoanPayment,
     getTotalIncome,
     getTotalExpenses,
     getNetBalance,
     getTotalInvestmentValue,
-    getTotalInvestmentReturn
+    getTotalInvestmentReturn,
+    getTotalLoanAmount
   } = useFinancialData();
 
   const handleAddExpense = (expense: any) => {
@@ -82,6 +87,22 @@ const Index = () => {
     });
   };
 
+  const handleAddLoan = (loan: any) => {
+    addLoan(loan);
+    toast({
+      title: "Loan Added",
+      description: "Your loan has been successfully added to your tracker.",
+    });
+  };
+
+  const handleLoanPayment = (loanId: string, amount: number) => {
+    updateLoanPayment(loanId, amount);
+    toast({
+      title: "Payment Made",
+      description: `Your payment of $${amount.toFixed(2)} has been recorded.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="container mx-auto px-4 py-8">
@@ -91,7 +112,7 @@ const Index = () => {
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-8">
+          <TabsList className="grid w-full grid-cols-8 mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart4 className="h-4 w-4" />
               Dashboard
@@ -116,6 +137,10 @@ const Index = () => {
               <Briefcase className="h-4 w-4" />
               Investments
             </TabsTrigger>
+            <TabsTrigger value="loans" className="flex items-center gap-2">
+              <Landmark className="h-4 w-4" />
+              Loans
+            </TabsTrigger>
             <TabsTrigger value="tax" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
               Tax
@@ -137,6 +162,65 @@ const Index = () => {
             </div>
             
             <RecentTransactions expenses={expenses} income={income} />
+
+            {loans.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Landmark className="h-5 w-5" />
+                    Active Loans
+                  </CardTitle>
+                  <CardDescription>
+                    Track your outstanding loans and payments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {loans.slice(0, 3).map((loan) => (
+                      <Card key={loan.id} className="bg-white shadow-sm border border-gray-100">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-lg">{loan.name}</CardTitle>
+                            <Badge variant={loan.status === 'active' ? 'default' : 'success'} className="capitalize">
+                              {loan.status}
+                            </Badge>
+                          </div>
+                          <CardDescription>{loan.itemPurchased}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                              <span>Remaining</span>
+                              <span className="font-medium">${loan.remainingAmount.toFixed(2)}</span>
+                            </div>
+                            <Progress 
+                              value={(loan.amount - loan.remainingAmount) / loan.amount * 100} 
+                              className="h-2" 
+                            />
+                            <div className="flex justify-between text-sm">
+                              <span>Monthly</span>
+                              <span className="font-medium text-blue-600">${loan.monthlyPayment.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+
+                    {loans.length > 3 && (
+                      <div className="flex items-center justify-center">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => setActiveTab("loans")}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          View All Loans
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {investments.length > 0 && (
               <div className="mt-6">
@@ -371,13 +455,32 @@ const Index = () => {
             <InvestmentPortfolio investments={investments} />
           </TabsContent>
 
+          <TabsContent value="loans" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Landmark className="h-5 w-5" />
+                  Add New Loan
+                </CardTitle>
+                <CardDescription>
+                  Track loans for major purchases and their repayments
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LoanForm onSubmit={handleAddLoan} />
+              </CardContent>
+            </Card>
+
+            <LoanTracker loans={loans} onPayment={handleLoanPayment} />
+          </TabsContent>
+
           <TabsContent value="tax" className="space-y-6">
             <TaxOptimization />
             
             <Card className="bg-white shadow-sm border border-gray-100">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
+                  <Calculator className="h-5 w-4" />
                   Tax Deductible Expenses
                 </CardTitle>
                 <CardDescription>
